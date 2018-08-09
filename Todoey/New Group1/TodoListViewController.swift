@@ -10,26 +10,20 @@ import UIKit
 
 class TodoListViewController: UITableViewController {
     var todoArray = [Item]()
+    let dataFilepath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Item.plist")
     
-    let defaults = UserDefaults.standard
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        let newItem = Item()
-        newItem.title = "Jitu"
-        todoArray.append(newItem)
         
-        let newItem1 = Item()
-        newItem1.title = "John"
-        todoArray.append(newItem1)
+        print(dataFilepath)
         
-        let newItem2 = Item()
-        newItem2.title = "Meri"
-        todoArray.append(newItem2)
      
-        if let items = defaults.array(forKey: "TodoListArray") as? [Item]  {
-            todoArray = items
-        }
+        
+        loadItems()
+//        if let items = defaults.array(forKey: "TodoListArray") as? [Item]  {
+//            todoArray = items
+//        }
     }
     //MARK - Tableview Datasource Methods
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -58,6 +52,8 @@ class TodoListViewController: UITableViewController {
         //print(todoArray[indexPath.row])
        // tableView.cellForRow(at: indexPath)?.accessoryType = .checkmark
         todoArray[indexPath.row].done = !todoArray[indexPath.row].done
+        saveItems()
+        
         
 //        if todoArray[indexPath.row].done == false {
 //            todoArray[indexPath.row].done = true
@@ -74,7 +70,7 @@ class TodoListViewController: UITableViewController {
 //            tableView.cellForRow(at: indexPath)?.accessoryType = .checkmark
 //        }
         
-        tableView.reloadData()
+        
         tableView.deselectRow(at: indexPath, animated: true)
     }
        //MARK - Add new Items
@@ -89,8 +85,7 @@ class TodoListViewController: UITableViewController {
             let newItem = Item()
             newItem.title = textField.text!
             self.todoArray.append(newItem)
-            self.defaults.set(self.todoArray, forKey: "TodoListArray")
-            self.tableView.reloadData()
+           self.saveItems()
         }
         alert.addTextField { (alertTextField) in
             alertTextField.placeholder = "Create new Item"
@@ -103,7 +98,31 @@ class TodoListViewController: UITableViewController {
         alert.addAction(action)
         present(alert, animated: true, completion: nil)
     }
-}
+    func saveItems(){
+        let encoder = PropertyListEncoder()
+        do{
+            let data = try encoder.encode(todoArray)
+            try data.write(to: dataFilepath! )
+        }catch{
+            print(error)
+        }
+        self.tableView.reloadData()
+    }
+    func loadItems(){
+        
+        if let data = try? Data(contentsOf: dataFilepath!){
+            let decoder = PropertyListDecoder()
+            do{
+            todoArray = try decoder.decode([Item].self, from: data)
+            }catch {
+                print(error)
+            }
+        }
+            
+        }
+        
+    }
+
 
 
 
